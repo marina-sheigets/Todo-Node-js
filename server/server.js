@@ -1,8 +1,8 @@
-const http = require('http');
+import  http from'http';
 
 const PORT=3030;
-let todos=[
-    {id:1, text:"Buy bread", checked:false},
+ let todos=[
+    {id:1, text:"Buy dog", checked:false},
     {id:2, text:"Buy cheese", checked:false},
     {id:3, text:"Buy onion", checked:false}
 ]
@@ -36,13 +36,14 @@ const server=http.createServer((req,res)=>{
             res.end();
            
         }else if(req.method=="PATCH"){
-            let id=getID(req);
-           
+            let id=getID(req); 
             let text='';
+            console.log(id);
+
             req.on('data',chunk=>{
                 text+=chunk;
             })
-            
+
             req.on('end', () => {
                 todos=todos.map(elem=>{
                     if(elem.id==id){
@@ -69,6 +70,7 @@ const server=http.createServer((req,res)=>{
 function getID(req){
     let lastIndex=req.url.lastIndexOf("/");
     let id=+req.url.slice(lastIndex+1,req.url.length)
+    console.log(id,typeof id);
     return id;
 }
 
