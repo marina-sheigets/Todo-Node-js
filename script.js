@@ -161,7 +161,7 @@ class TodoItem{
          this.filter();
      }*/
     
-     addTodo(){
+      async addTodo(){
         const todoInput=document.querySelector(".todo-input");
         const value=todoInput.value;
         todoInput.value="";
@@ -170,24 +170,38 @@ class TodoItem{
             return;
         }
 
-        fetch(this.URL,{
+         await fetch(this.URL,{
             method:"POST",
-            body:value,
+            body:JSON.stringify({ title: value }),
             mode: 'no-cors'
         }).then(()=>alert("Succesfully added"))
           .catch(alert)
+
+          let todoItem=new TodoItem();
+         let newItem=todoItem.createTodo(value)
+         this.todos.push(newItem);
+         this.saveinLocalStorage();
+         this.filter();
      }
  
-     deleteTodoItem(button){
+      async deleteTodoItem(button){
          let i=button.getAttribute("data-id")
-
-         fetch(this.URL+i,{
+         try{
+          await fetch(this.URL+"/"+i,{
              method:"DELETE",
-         }).then(alert("Deleted succesfully!"))
-         .catch(alert);
-        /* this.todos=this.todos.filter(elem=>elem.id!=i);
+             headers:{
+               /*"Access-Control-Allow-Origin":"http://localhost:3030/todos",
+               "Access-Control-Allow-Methods": "DELETE"*/
+               "content-type": "application/json" 
+             },
+         }).then(res=>console.log(res))
+           .catch(err=>console.log(err));
+        }catch(e){
+            console.log(e)
+        }
+         this.todos=this.todos.filter(elem=>elem.id!=i);
          this.saveinLocalStorage();
-         this.filter();*/
+         this.filter();
      }   
  
      changeStatus(checkbox){
@@ -227,12 +241,21 @@ class TodoItem{
      changeTodoText(e){
          if(e.value){
              let id=+e.parentElement.getAttribute("for");
-            
+            console.log(e.value)
+             try{
              fetch(this.URL+"/"+id,{
                  method:"PATCH",
-                 body:e.value,
-             }).then(alert("Changed"))
+                 body: JSON.stringify({ title: e.value }),
+                 headers: {
+                    "content-type": "application/json" 
+                  },
+                  mode: 'cors',
+                
+             }).then(res=>console.log(res))
              .catch(err=>alert(err))
+            }catch(err){
+                console.log(err);
+            }
              this.saveinLocalStorage();
              this.filter()
          }
