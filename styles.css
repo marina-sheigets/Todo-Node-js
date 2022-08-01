@@ -1,0 +1,117 @@
+*{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body{
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items:center;
+    background-color: grey;
+}
+.container{
+    background-color:aliceblue;
+    min-height:400px;
+    width:50%;
+    display: flex;
+    flex-direction: column;
+    align-items:center;
+    justify-content: space-between;
+    border:1px solid grey;
+}
+
+.main-h1{
+    padding:2rem 0;
+}
+
+.todo-form{
+    display: flex;
+    justify-content: center;
+    gap:0.5rem;
+    height:2rem;
+    margin-bottom:2rem;
+}
+
+.todo-input{
+    padding-left: 0.3rem;
+}
+
+.submit,
+.activate{
+    min-width:3rem;
+    background-color:rgb(105, 215, 101);
+    border:none;
+    border-radius: 4px;
+    cursor:pointer;
+}
+
+.activate{
+    font-size: 1.4rem;
+    background-color: coral;
+}
+
+.activate.active{
+    background-color:grey;
+}
+
+.todo-list{
+    text-align: center;
+    display: flex;
+    width: 70%;
+    flex-direction: column;
+    justify-content: center;
+    gap:0.5rem;
+    padding-bottom: 1rem;
+}
+
+.todo-list li{
+    list-style: none;
+    width: 100%;
+    justify-content: space-around;
+    align-items: center;
+    display: flex;
+}
+.todo-list li label{
+    flex:15;
+    text-align: center;
+    user-select: none;
+    overflow-x:hidden;
+    padding:0 1rem;
+}
+
+.todo-list button{
+    background-color:rgb(252, 88, 88);
+    width:1rem;
+    border:none;
+    flex:1;
+}
+
+label.completed{
+    text-decoration: line-through;
+}
+
+.filter-area{
+    padding-top: 0.3rem;
+    border-top:1px solid grey;
+    height:100px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: start;
+}
+
+
+@media  screen and (max-width:650px) {
+    .container{
+        width:80%;
+    }
+}
+
+@media  screen and (max-width:370px) {
+    .container{
+        width:100%;
+    }
+}
+
