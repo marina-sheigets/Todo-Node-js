@@ -13,8 +13,6 @@ const server=http.createServer((req,res)=>{
     let URL=(`http://localhost:${PORT}`+req.url);
     let regex=/http:\/\/[a-z]*\:[0-9]*\/todos/;
 
-   // let query=url.parse(req.url,true);
-    console.log(req);
     if(regex.test(URL)){
         if(req.method=="POST"){
             let text='';
@@ -37,7 +35,7 @@ const server=http.createServer((req,res)=>{
             todos=todos.filter(elem=>elem.id!=id)
             res.end();
            
-        }else if(req.method=="PUT"){
+        }else if(req.method=="PATCH"){
             let id=getID(req);
            
             let text='';
@@ -57,7 +55,7 @@ const server=http.createServer((req,res)=>{
                 })
               });
             res.end();
-        }else{
+        }else if(req.method=="GET"){
             res.writeHead(200, {
                 'Content-Type': 'application/json',
             });
