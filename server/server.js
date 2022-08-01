@@ -8,77 +8,7 @@ const PORT=3030;
     {id:3, text:"Buy onion", checked:false}
 ]
 
-const server=http.createServer((req,res)=>{
-/*
-    let URL=(`http://localhost:${PORT}`+req.url);
-    let regex=/http:\/\/[a-z]*\:[0-9]*\/todos/;
-
-    const headers = {
-        "Access-Control-Allow-Origin": "http://127.0.0.1:5501/",
-        "Access-Control-Allow-Methods": "OPTIONS, POST, GET, DELETE, PATCH",
-      };
-          console.log(req.headers)
-    if(regex.test(URL)){
-        if(req.method=="POST"){
-            let text="";
-            req.on('data',chunk=>{
-                text+=chunk;
-            })
-
-            req.on('end', () => {
-                text=JSON.parse(text);
-                todos=[...todos,
-                    {
-                        id:Date.now(),
-                        text:text.title,
-                        checked:false
-                    }];
-              });
-              console.log("POST method");
-            res.end();
-        }else if(req.method=="DELETE"){
-            console.log("DELETE method");
-            res.writeHead(200,headers);
-            
-            let id=getID(req);
-
-            todos=todos.filter(elem=>elem.id!=id)
-            res.end();
-           
-        }else if(req.method=="PATCH"){
-            let id=getID(req); 
-            let text='';
-            console.log(id);
-
-            req.on('data',chunk=>{
-                text+=chunk;
-            })
-
-            req.on('end', () => {
-                text=JSON.parse(text);
-                todos=todos.map(elem=>{
-                    if(elem.id==id){
-                        return{
-                            ...elem,
-                            text:text
-                        }
-                    }
-                    return elem;
-                })
-              });
-              console.log("PATCH method");
-            res.end();
-        }else if(req.method=="GET"){
-            res.writeHead(200, {
-                'Content-Type': 'application/json',
-            });
-            res.end(JSON.stringify(todos));
-        }   
-        res.end()
-    }else{
-        res.end("Page was not found...")
-    }*/
-})
+const server=http.createServer();
 
 function getID(req){
     let lastIndex=req.url.lastIndexOf("/");
