@@ -62,6 +62,7 @@ class TodoItem{
          if(localStorage.getItem("buttonStatus")==="active"){
              activateButton.classList.add("active");
          }
+         
          activateButton.innerHTML=`&#9745;`;
          activateButton.setAttribute("onclick",`todoApp.changeAllCompleted()`)
  
@@ -127,19 +128,26 @@ class TodoItem{
          let activateButton=document.querySelector(".activate");
          activateButton.classList.toggle("active");
  
-         this.todos=this.todos.map((elem)=>{
-             if(activateButton.classList.contains("active")){
-                 return{
-                     ...elem,
-                     checked:true,
-                 }
-             }else{
-                 return{
-                     ...elem,
-                     checked:false,
-                 } 
-             }
+         fetch(this.URL,{
+            method:"PATCH",
+            body:JSON.stringify({changeStatusAll:"true"})
+         }).then((res)=>{console.log(res)
+            
          })
+         this.todos=this.todos.map((elem)=>{
+            if(activateButton.classList.contains("active")){
+                return{
+                    ...elem,
+                    checked:true,
+                }
+            }else{
+                return{
+                    ...elem,
+                    checked:false,
+                } 
+            }
+        })
+
          activateButton.classList.contains("active")?this.saveButtonStatusInLocalStorage("active"):this.saveButtonStatusInLocalStorage("non-active");
          this.saveinLocalStorage();
          this.filter()
@@ -161,7 +169,7 @@ class TodoItem{
          this.filter();
      }*/
     
-      async addTodo(){
+       addTodo(){
         const todoInput=document.querySelector(".todo-input");
         const value=todoInput.value;
         todoInput.value="";
@@ -170,63 +178,86 @@ class TodoItem{
             return;
         }
 
-         await fetch(this.URL,{
+          fetch(this.URL,{
             method:"POST",
             body:JSON.stringify({ title: value }),
             mode: 'no-cors'
-        }).then(()=>alert("Succesfully added"))
+        }).then(()=>{
+            let todoItem=new TodoItem();
+            let newItem=todoItem.createTodo(value)
+            this.todos.push(newItem);
+            this.saveinLocalStorage();
+            this.filter()})
           .catch(alert)
 
-          let todoItem=new TodoItem();
-         let newItem=todoItem.createTodo(value)
-         this.todos.push(newItem);
-         this.saveinLocalStorage();
-         this.filter();
      }
  
-      async deleteTodoItem(button){
+       deleteTodoItem(button){
          let i=button.getAttribute("data-id")
          try{
-          await fetch(this.URL+"/"+i,{
+           fetch(this.URL+"/"+i,{
              method:"DELETE",
              headers:{
                /*"Access-Control-Allow-Origin":"http://localhost:3030/todos",
                "Access-Control-Allow-Methods": "DELETE"*/
                "content-type": "application/json" 
              },
-         }).then(res=>console.log(res))
+         }) .then(response=>console.dir(response))
+            .then(()=>{
+                this.todos=this.todos.filter(elem=>elem.id!=i);
+                this.saveinLocalStorage();
+                this.filter();
+            })
            .catch(err=>console.log(err));
         }catch(e){
             console.log(e)
         }
-         this.todos=this.todos.filter(elem=>elem.id!=i);
-         this.saveinLocalStorage();
-         this.filter();
      }   
  
      changeStatus(checkbox){
          let idCheck=+checkbox.getAttribute("data-id");
          let allCompleted=this.todos.length;
  
-         this.todos=this.todos.map((item)=>{
-             if(item.id===idCheck)
-             {
-                 return{
-                     ...item,
-                     checked:!item.checked,
-                 }
-             }
-             return item;
-         }) 
- 
-         for(let i=0;i<this.todos.length;i++){
-             if(!this.todos[i].checked){
-                 allCompleted--
-             }
+         try{
+            fetch(this.URL+"/"+idCheck,{
+              method:"PATCH",
+              body:JSON.stringify({
+                changeStatus:"true"
+              }),
+              headers:{
+                /*"Access-Control-Allow-Origin":"http://localhost:3030/todos",
+                "Access-Control-Allow-Methods": "DELETE"*/
+                "content-type": "application/json" 
+              },
+          }) .then(response=>console.dir(response))
+             .then(()=>{
+                
+                })
+            .catch(err=>console.log(err));
+         }catch(e){
+             console.log(e)
          }
- 
-         this.saveinLocalStorage();  
-         this.filter()
+
+         this.todos=this.todos.map((item)=>{
+            if(item.id===idCheck)
+            {
+                return{
+                    ...item,
+                    checked:!item.checked,
+                }
+            }
+            return item;
+        })
+
+         for(let i=0;i<this.todos.length;i++){
+            if(!this.todos[i].checked){
+                allCompleted--
+            }
+        }
+
+        this.saveinLocalStorage();  
+        this.filter()
+
          let activateButton=document.querySelector(".activate");
          if(allCompleted==this.todos.length){
              activateButton.classList.add("active")
@@ -235,13 +266,12 @@ class TodoItem{
              activateButton.classList.remove("active");
              this.saveButtonStatusInLocalStorage("");
          }
-         
      }
  
      changeTodoText(e){
          if(e.value){
              let id=+e.parentElement.getAttribute("for");
-            console.log(e.value)
+
              try{
              fetch(this.URL+"/"+id,{
                  method:"PATCH",
@@ -252,12 +282,14 @@ class TodoItem{
                   mode: 'cors',
                 
              }).then(res=>console.log(res))
+                .then(()=>{
+                    this.saveinLocalStorage();
+                    this.filter()
+                })
              .catch(err=>alert(err))
             }catch(err){
                 console.log(err);
             }
-             this.saveinLocalStorage();
-             this.filter()
          }
          return false;
      }
@@ -285,7 +317,6 @@ class TodoItem{
                  arr=this.todos.filter(elem=>elem.checked!=false);
                  break;
              case "All":
-                 activateButton.classList.remove("active")
                  arr=this.todos.slice(0);
                  break;
          }
