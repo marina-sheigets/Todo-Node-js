@@ -1,30 +1,71 @@
 import  http from'http';
-import { resolve } from 'path';
+import { MongoClient } from 'mongodb';
+
+const URL_MONGO=`mongodb+srv://marinasheigets:mAIUIsJ4vVV08ZNy@cluster0.js7qmad.mongodb.net/?retryWrites=true&w=majority`
+
+const client=new MongoClient(URL_MONGO)
+const DB_NAME="TodoApp";
+const COLLECTION="todos";
+
+
+client.connect();
+
+
+
+async function mongoAddTodo(client,text){
+    let newTodo={
+        id:Date.now(),
+        text:text.title,
+        checked:false
+    }
+
+    await client.db(DB_NAME).collection(COLLECTION).insertOne(newTodo);
+    return await getTodos(client);
+
+}
+
+async function getTodos(client){//work
+    return  await client.db(DB_NAME).collection(COLLECTION).find({}).toArray()
+}
+
+async function deleteTodo(client,id){//work
+    await client.db(DB_NAME).collection(COLLECTION).deleteOne({id:id})
+    return await getTodos(client);
+}
+
+async function updateTodoText(client,newText,id){//work
+    await client.db(DB_NAME).collection(COLLECTION).updateOne({id:id},{$set:{text:newText}});
+    return await getTodos(client);
+}
+
+async function changeStatus(client,id){
+    let todo = await client.db(DB_NAME).collection(COLLECTION).findOne({id:id})
+    let checked = todo?.checked;
+    await client.db(DB_NAME).collection(COLLECTION).updateOne({id:id},{$set:{checked:!checked}});
+    return await getTodos(client);
+}
+
+async function changeStatusAll(client,active){
+    if(active){
+        await client.db(DB_NAME).collection(COLLECTION).updateMany({},{$set:{checked:true}});
+    }else{
+        await client.db(DB_NAME).collection(COLLECTION).updateMany({},{$set:{checked:false}});
+    }
+    return await getTodos(client);
+}
+
 
 
 const PORT = 3030;
- let todos = [
-    //{id:1, text:"Buy dog", checked:false},
-    {id:2, text:"Buy cheese", checked:false},
-    {id:3, text:"Buy onion", checked:false}
-]
 
 const server = http.createServer();
 
 function getID(req){
     let lastIndex = req.url.lastIndexOf("/");
-    let id = +req.url.slice(lastIndex+1,req.url.length)
+    let id = +req.url.slice(lastIndex + 1,req.url.length)
     return id;
 }
 
-
-function addTodo(text){
-    return [{
-        id:Date.now(),
-        text:text.title,
-        checked:false
-    },...todos];
-}
 
 server.listen(PORT);
 
@@ -46,10 +87,14 @@ server.on("request", async function (request, response) {
         {
         case "GET":
             response.writeHead(200, headers);
-            response.end(JSON.stringify(todos));
-           // request.end(todos)
-           
+            try{
+                let res = await getTodos(client);
+                response.end(JSON.stringify(res));
+            }catch(err){
+                console.log(err)
+            }
             break;
+
         case "POST":
             response.writeHead(200, {...headers,'Content-Type': 'application/json'});
             let data = "";
@@ -57,10 +102,14 @@ server.on("request", async function (request, response) {
                     data += chunk;
                })
    
-               request.on('end',  ()   =>  {
+               request.on('end',  async ()   =>  {
                    data =  JSON.parse(data);
-                   todos = addTodo(data); 
-                   response.end(JSON.stringify(todos));                
+                   try{
+                        let res = await mongoAddTodo(client,data)
+                        response.end(JSON.stringify(res)); 
+                   }catch(e){
+                       console.log(e)
+                   }              
                })
                           
             break;
@@ -73,48 +122,48 @@ server.on("request", async function (request, response) {
             request.on('data',chunk  => {
                 newText += chunk;
             })
-            request.on('end', ()   =>  {
+            request.on('end', async()   =>  {
                 
                 newText = JSON.parse(newText);
                 if(newText.hasOwnProperty("changeStatus")){
-                    todos = todos.map(elem  => {
-                        if(elem.id  == id){
-                            return{
-                                ...elem,
-                                checked:!elem.checked
-                            }
-                        }
-                        return elem;
-                    })
+                   try{
+                    let res = await changeStatus(client,id);
+                    response.end(JSON.stringify(res));
+
+                   }catch(e){
+                       console.log(e)
+                   }
                 }else if(newText.hasOwnProperty("title")){
 
-                    todos = todos.map(elem  => {
-                        if(elem.id   ===  id){
-                            return{
-                                ...elem,
-                                text:newText.title
-                            }
-                        }
-                        return elem;
-                    })
+                    try{
+                        let res = await updateTodoText(client,newText?.title,id);
+                        response.end(JSON.stringify(res));
+
+                    }catch(e){
+                        console.log(e)
+                    }
                 }else if(newText.hasOwnProperty("changeStatusAll")){
-                    todos  =  todos.map(elem  => {
-                            return{
-                                ...elem,
-                                checked:!elem.checked
-                            }
-                        }
-                    )
+                      try{
+                        let res = await changeStatusAll(client,newText?.active);
+                        response.end(JSON.stringify(res));
+    
+                       }catch(e){
+                           console.log(e)
+                       }
                 }
-                response.end(JSON.stringify(todos));
             })
-            break;
-              
+            break; 
         case "DELETE":
             response.writeHead(200, headers);
             let i = getID(request);
-            todos = todos.filter(elem  => elem.id != i)
-            response.end(JSON.stringify(todos));
+            try{
+                let res=await deleteTodo(client,i)
+                response.end(JSON.stringify(res));
+
+            }catch(e){
+                console.log(e)
+            }
+
             break;
 
         case "OPTIONS": 
@@ -132,7 +181,6 @@ server.on("request", async function (request, response) {
             response.end(JSON.stringify({error:`method ${request.method} not allowed`}));
             break;
         }
-        
     }else{
         response.end("Page was not found...")
     }

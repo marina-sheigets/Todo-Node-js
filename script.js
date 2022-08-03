@@ -125,24 +125,24 @@ class TodoItem{
          activateButton.classList.toggle("active");
  
          try{
+             let active = false
+             if(activateButton.classList.contains("active")){
+                active = true;
+             }
+            
             let res = await fetch(this.URL,{
             method:"PATCH",
-            body:JSON.stringify({changeStatusAll:"true"})
+            body:JSON.stringify({changeStatusAll:"true",active:active})
          })
 
             let body = await res.json();
-            this.saveTodos(body); 
-            this.filter();
-             activateButton.classList.contains("active") ? this.saveButtonStatusInLocalStorage("active"):this.saveButtonStatusInLocalStorage("non-active");
-             this.saveinLocalStorage();
-             this.filter()
-
-         }catch(err){
+            activateButton.classList.contains("active") ? this.saveButtonStatusInLocalStorage("active"):this.saveButtonStatusInLocalStorage("non-active");
+            this.saveTodos(body);
+            this.filter() 
+            this.changeActiveButton()
+        }catch(err){
             console.log(err)
          }
-            
-         
-         
      }
 
     async addTodo(){
@@ -174,7 +174,7 @@ class TodoItem{
           let res = await fetch(this.URL + "/" + i,{
              method:"DELETE",})
             let body = await res.json();
-            console.log( res)
+            
             this.saveTodos(body);
             this.filter(); 
         }catch(err){
@@ -184,7 +184,6 @@ class TodoItem{
  
     async changeStatus(checkbox){
          let idCheck = +checkbox.getAttribute("data-id");
-         let allCompleted = this.todos.length;
  
          try{
             let res = await fetch(this.URL+"/"+idCheck,{
@@ -198,27 +197,30 @@ class TodoItem{
           })
             let body = await res.json();
             this.saveTodos(body);
-            
-            for(let i = 0;i<this.todos.length;i++){
-                if(!this.todos[i].checked){
-                    allCompleted--
-                }
-            }
-            
             this.filter()
-
-            let activateButton = document.querySelector(".activate");
-            if(allCompleted == this.todos.length){
-                activateButton.classList.add("active")
-                this.saveButtonStatusInLocalStorage("active");
-            }else{
-                if(localStorage.getItem("variant") != "Completed")
-                activateButton.classList.remove("active");
-                this.saveButtonStatusInLocalStorage("");
-            } 
+            this.changeActiveButton()
          }catch(err){
              console.log(err)
          }
+     }
+
+     changeActiveButton(){
+        let allCompleted = this.todos.length;
+
+        for(let i = 0;i<this.todos.length;i++){
+            if(!this.todos[i].checked){
+                allCompleted--
+            }
+        }
+        let activateButton = document.querySelector(".activate");
+        if(allCompleted == this.todos.length){
+            activateButton.classList.add("active")
+            this.saveButtonStatusInLocalStorage("active");
+        }else{
+            if(localStorage.getItem("variant") != "Completed")
+            activateButton.classList.remove("active");
+            this.saveButtonStatusInLocalStorage("");
+        } 
      }
  
      async changeTodoText(e){
@@ -256,7 +258,7 @@ class TodoItem{
          let arr = [];
          switch(variant){
              case "Active":
-                activateButton.classList.remove("active")
+                 activateButton.classList.remove("active")
                  arr = this.todos.filter(elem =>elem.checked!= true);
                  break;
              case "Completed":
