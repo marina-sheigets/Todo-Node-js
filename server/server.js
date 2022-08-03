@@ -7,51 +7,52 @@ const client=new MongoClient(URL_MONGO)
 const DB_NAME="TodoApp";
 const COLLECTION="todos";
 
-
 client.connect();
 
+const getTodosCollection = () => {
+    return  client.db(DB_NAME).collection(COLLECTION)
+}
 
-
-async function mongoAddTodo(client,text){
-    let newTodo={
+async function mongoAddTodo(text){
+    const newTodo={
         id:Date.now(),
         text:text.title,
         checked:false
     }
 
-    await client.db(DB_NAME).collection(COLLECTION).insertOne(newTodo);
-    return await getTodos(client);
+    await getTodosCollection().insertOne(newTodo);
+    return await getTodos();
 
 }
 
-async function getTodos(client){//work
-    return  await client.db(DB_NAME).collection(COLLECTION).find({}).toArray()
+async function getTodos(){
+    return  await getTodosCollection().find({}).toArray()
 }
 
-async function deleteTodo(client,id){//work
-    await client.db(DB_NAME).collection(COLLECTION).deleteOne({id:id})
-    return await getTodos(client);
+async function deleteTodo(id){
+    await getTodosCollection().deleteOne({id:id})
+    return await getTodos();
 }
 
-async function updateTodoText(client,newText,id){//work
-    await client.db(DB_NAME).collection(COLLECTION).updateOne({id:id},{$set:{text:newText}});
-    return await getTodos(client);
+async function updateTodoText(newText,id){
+    await getTodosCollection().updateOne({id:id},{$set:{text:newText}});
+    return await getTodos();
 }
 
-async function changeStatus(client,id){
-    let todo = await client.db(DB_NAME).collection(COLLECTION).findOne({id:id})
-    let checked = todo?.checked;
-    await client.db(DB_NAME).collection(COLLECTION).updateOne({id:id},{$set:{checked:!checked}});
-    return await getTodos(client);
+async function changeStatus(id){
+    const todo = await getTodosCollection().findOne({id:id})
+    const checked = todo?.checked;
+    await getTodosCollection().updateOne({id:id},{$set:{checked:!checked}});
+    return await getTodos();
 }
 
-async function changeStatusAll(client,active){
+async function changeStatusAll(active){
     if(active){
-        await client.db(DB_NAME).collection(COLLECTION).updateMany({},{$set:{checked:true}});
+        await getTodosCollection().updateMany({},{$set:{checked:true}});
     }else{
-        await client.db(DB_NAME).collection(COLLECTION).updateMany({},{$set:{checked:false}});
+        await getTodosCollection().updateMany({},{$set:{checked:false}});
     }
-    return await getTodos(client);
+    return await getTodos();
 }
 
 
@@ -61,8 +62,8 @@ const PORT = 3030;
 const server = http.createServer();
 
 function getID(req){
-    let lastIndex = req.url.lastIndexOf("/");
-    let id = +req.url.slice(lastIndex + 1,req.url.length)
+    const lastIndex = req.url.lastIndexOf("/");
+    const id = +req.url.slice(lastIndex + 1,req.url.length)
     return id;
 }
 
@@ -74,7 +75,7 @@ server.listen(PORT);
 server.on("request", async function (request, response) {
 
     const URL = (`http://localhost:${PORT}`+request.url);
-    let regex = /http:\/\/[a-z]*\:[0-9]*\/todos/;
+    const regex = /http:\/\/[a-z]*\:[0-9]*\/todos/;
 
     const headers  =  {
         "Access-Control-Allow-Origin": "*",
@@ -88,7 +89,7 @@ server.on("request", async function (request, response) {
         case "GET":
             response.writeHead(200, headers);
             try{
-                let res = await getTodos(client);
+                const res = await getTodos();
                 response.end(JSON.stringify(res));
             }catch(err){
                 console.log(err)
@@ -105,7 +106,7 @@ server.on("request", async function (request, response) {
                request.on('end',  async ()   =>  {
                    data =  JSON.parse(data);
                    try{
-                        let res = await mongoAddTodo(client,data)
+                        const res = await mongoAddTodo(data)
                         response.end(JSON.stringify(res)); 
                    }catch(e){
                        console.log(e)
@@ -116,7 +117,7 @@ server.on("request", async function (request, response) {
 
         case "PATCH":
             response.writeHead(200, {...headers,'Content-Type': 'application/json'})
-            let id = getID(request); 
+            const id = getID(request); 
             let newText = '';
 
             request.on('data',chunk  => {
@@ -127,7 +128,7 @@ server.on("request", async function (request, response) {
                 newText = JSON.parse(newText);
                 if(newText.hasOwnProperty("changeStatus")){
                    try{
-                    let res = await changeStatus(client,id);
+                    const res = await changeStatus(id);
                     response.end(JSON.stringify(res));
 
                    }catch(e){
@@ -136,7 +137,7 @@ server.on("request", async function (request, response) {
                 }else if(newText.hasOwnProperty("title")){
 
                     try{
-                        let res = await updateTodoText(client,newText?.title,id);
+                        const res = await updateTodoText(newText?.title,id);
                         response.end(JSON.stringify(res));
 
                     }catch(e){
@@ -144,7 +145,7 @@ server.on("request", async function (request, response) {
                     }
                 }else if(newText.hasOwnProperty("changeStatusAll")){
                       try{
-                        let res = await changeStatusAll(client,newText?.active);
+                        const res = await changeStatusAll(newText?.active);
                         response.end(JSON.stringify(res));
     
                        }catch(e){
@@ -155,9 +156,9 @@ server.on("request", async function (request, response) {
             break; 
         case "DELETE":
             response.writeHead(200, headers);
-            let i = getID(request);
+            const i = getID(request);
             try{
-                let res=await deleteTodo(client,i)
+                const res=await deleteTodo(i)
                 response.end(JSON.stringify(res));
 
             }catch(e){

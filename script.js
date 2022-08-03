@@ -57,6 +57,9 @@ class TodoItem{
          activateButton.classList.add("activate");
          if(localStorage.getItem("buttonStatus") === "active"){
              activateButton.classList.add("active");
+         }else{
+            activateButton.classList.remove("active");
+
          }
          
          activateButton.innerHTML = `&#9745;`;
@@ -266,7 +269,8 @@ class TodoItem{
                  arr = this.todos.filter(elem =>elem.checked!= false);
                  break;
              case "All":
-                 activateButton.classList.contains("active")?activateButton.classList.remove("active"):null;
+                 this.changeActiveButton();
+                 //activateButton.classList.contains("active")?activateButton.classList.remove("active"):null;
                  arr = this.todos.slice(0);
                  break;
          }
